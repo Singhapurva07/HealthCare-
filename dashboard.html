@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        babyblue: {
+                            lightest: '#f0f9ff',
+                            lighter: '#e0f2fe',
+                            light: '#bae6fd',
+                            DEFAULT: '#7dd3fc',
+                            dark: '#38bdf8'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'fade-in': 'fadeIn 0.8s ease-in-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotate(5deg)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Lottie Player -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <style>
+        body.normal-contrast {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+            color: #1e3a8a;
+            min-height: 100vh;
+        }
+        body.high-contrast {
+            background-color: #000;
+            color: #fff;
+        }
+        .high-contrast input, .high-contrast textarea {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #fff;
+        }
+        .fc-daygrid-day:hover {
+            cursor: pointer;
+            background-color: #e0f2fe;
+        }
+        .high-contrast .fc-daygrid-day:hover {
+            background-color: #444;
+        }
+        #calendar {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid #bae6fd;
+        }
+        .error-message {
+            color: #dc2626;
+            margin-top: 0.5rem;
+        }
+        .result-box {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 1rem;
+            padding: 20px;
+            margin-top: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            white-space: pre-wrap;
+            backdrop-filter: blur(10px);
+        }
+        .high-contrast .result-box {
+            background-color: #222;
+            border-color: #fff;
+            color: #fff;
+        }
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(186, 230, 253, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: #7dd3fc;
+        }
+        .feature-icon {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            width: 60px;
+            height: 60px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+            border: none;
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            border: none;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0f2fe;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .floating-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(186, 230, 253, 0.4) 0%, rgba(125, 211, 252, 0.2) 100%);
+            filter: blur(40px);
+        }
+        .caretaker-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            padding: 20px;
+            border: 1px solid rgba(186, 230, 253, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .caretaker-widget:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(186, 230, 253, 0.3);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+        .animate-float-delayed-2 {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 4s;
+        }
+    </style>
+</head>
+<body class="normal-contrast">
+    <!-- Floating Background Elements -->
+    <div class="floating-bg">
+        <div class="floating-shape animate-float" style="width: 300px; height: 300px; top: 10%; left: 10%;"></div>
+        <div class="floating-shape animate-float-delayed" style="width: 200px; height: 200px; top: 60%; right: 15%;"></div>
+        <div class="floating-shape animate-float-delayed-2" style="width: 250px; height: 250px; bottom: 20%; left: 60%;"></div>
+        <div class="floating-shape animate-float" style="width: 180px; height: 180px; top: 30%; right: 40%;"></div>
+    </div>
+
+    <div class="min-h-screen">
+        <!-- Header Section -->
+        <header class="relative z-10 pt-8 pb-4">
+            <div class="container mx-auto px-6">
+                <div class="dashboard-card p-6 animate-fade-in">
+                    <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+                        <div class="flex items-center gap-6">
+                            <div class="feature-icon animate-pulse-slow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="text-4xl font-bold text-sky-700 mb-2">HealthCare+ Dashboard</h1>
+                                <p class="text-lg text-gray-600">Your Complete Health Management System</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <button id="toggleContrast" class="btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                High Contrast
+                            </button>
+                            <a href="{{ url_for('logout') }}" class="btn-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {% if error %}
+        <div class="container mx-auto px-6 mb-6">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl">
+                {{ error }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Welcome Section -->
+        <section class="container mx-auto px-6 mb-12">
+            <div class="section-header animate-slide-up">
+                <h2 class="section-title">Empowering Health Management in India</h2>
+                <p class="section-subtitle">
+                    A comprehensive platform designed specifically for chronically ill patients in India, offering personalized care, smart recommendations, and seamless health tracking with support for Hindi language and CDSCO-approved medicines.
+                </p>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid animate-slide-up">
+                <div class="stat-card">
+                    <div class="feature-icon mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-sky-700 mb-2">AI Virtual Caretaker</h3>
+                    <p class="text-gray-600">24/7 personalized health guidance in Hindi & English</p>
+                </div>
+                <div class="stat-card">
+                    <div class="feature-icon mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 8.172V5L8 4z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-sky-700 mb-2">Smart Medicine Recommender</h3>
+                    <p class="text-gray-600">CDSCO-approved medicines & vegan diet suggestions</p>
+                </div>
+                <div class="stat-card">
+                    <div class="feature-icon mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-sky-700 mb-2">Symptom Checker</h3>
+                    <p class="text-gray-600">AI-powered symptom analysis & health insights</p>
+                </div>
+                <div class="stat-card">
+                    <div class="feature-icon mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-sky-700 mb-2">Smart Calendar</h3>
+                    <p class="text-gray-600">Medication reminders & appointment tracking</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Features Section -->
+        <section class="container mx-auto px-6 mb-12">
+            <div class="section-header">
+                <h2 class="section-title">Your Health Management Tools</h2>
+                <p class="section-subtitle">
+                    Access all your health management tools in one place. From AI-powered recommendations to smart reminders, everything you need for better health management.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <!-- Left Column: Health Tools -->
+                <div class="xl:col-span-2 space-y-8">
+                    <!-- Medicine Recommender -->
+                    <div class="dashboard-card p-8 animate-slide-up">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 8.172V5L8 4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-sky-700">Medicine Recommender</h3>
+                                <p class="text-gray-600">Get CDSCO-approved medicine recommendations</p>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <textarea id="healthProblem" class="input-field" rows="4" placeholder="Describe your health problem in detail (e.g., 'I have been experiencing severe headaches for the past 3 days along with nausea')"></textarea>
+                            <button id="recommendMedicine" class="btn-success w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Get Smart Recommendations
+                            </button>
+                            <div id="medicineResponse" class="result-box hidden"></div>
+                            <div id="medicineError" class="error-message"></div>
+                        </div>
+                    </div>
+
+                    <!-- Symptom Checker -->
+                    <div class="dashboard-card p-8 animate-slide-up">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-sky-700">AI Symptom Checker</h3>
+                                <p class="text-gray-600">Analyze your symptoms with AI-powered insights</p>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <textarea id="symptoms" class="input-field" rows="4" placeholder="Enter your symptoms in detail (e.g., 'fever, headache, body ache, fatigue for 2 days')"></textarea>
+                            <button id="checkSymptoms" class="btn-success w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                Analyze Symptoms
+                            </button>
+                            <div id="symptomResponse" class="result-box hidden"></div>
+                            <div id="symptomError" class="error-message"></div>
+                            <div class="mt-6">
+                                <h4 class="text-lg font-semibold text-sky-700 mb-3">Recent Symptom Checks</h4>
+                                <ul id="symptomChecks" class="space-y-2 text-gray-700">
+                                    {% for check in symptom_checks %}
+                                    <li class="p-3 bg-sky-50 rounded-lg border border-sky-100">{{ check.symptoms }} <span class="text-sm text-gray-500">({{ check.check_time }})</span></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prescription & Reports Upload -->
+                    <div class="dashboard-card p-8 animate-slide-up">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-sky-700">Document Manager</h3>
+                                <p class="text-gray-600">Upload and manage prescriptions & medical reports</p>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="border-2 border-dashed border-babyblue-light rounded-xl p-8 text-center bg-gradient-to-br from-sky-50 to-blue-50">
+                                <input type="file" id="reportFile" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                                <label for="reportFile" class="cursor-pointer block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-babyblue-dark mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <span class="text-lg text-gray-700 font-medium">Click to upload or drag and drop</span>
+                                    <span class="block text-sm text-gray-500 mt-2">PDF, PNG, JPG files up to 10MB</span>
+                                    <span id="selectedFileName" class="block text-sm text-sky-600 mt-2 font-medium"></span>
+                                </label>
+                            </div>
+                            <button id="uploadReport" class="btn-primary w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                                </svg>
+                                Upload & Analyze Document
+                            </button>
+                            <div id="uploadResponse" class="result-box hidden"></div>
+                            <div id="uploadError" class="error-message"></div>
+                            <div class="mt-6">
+                                <h4 class="text-lg font-semibold text-sky-700 mb-3">Recent Uploads</h4>
+                                <ul id="recentUploads" class="space-y-2">
+                                    {% for upload in uploads %}
+                                    <li class="p-3 bg-sky-50 rounded-lg border border-sky-100">
+                                        <a href="{{ url_for('uploaded_file', filename=upload.file_name) }}" class="text-sky-600 hover:text-sky-800 font-medium" target="_blank">{{ upload.file_name }}</a> 
+                                        <span class="text-sm text-gray-500">({{ upload.upload_time }})</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Calendar -->
+                <div class="xl:col-span-1">
+                    <div class="dashboard-card p-8 sticky top-8 animate-slide-up">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-sky-700">Smart Calendar</h3>
+                                <p class="text-gray-600">Manage appointments & reminders</p>
+                            </div>
+                        </div>
+                        <div id="calendar" class="mb-6"></div>
+                        <div class="space-y-4">
+                            <h4 class="text-lg font-semibold text-sky-700">Add New Reminder</h4>
+                            <div class="space-y-4">
+                                <input type="text" id="reminderTitle" class="input-field" placeholder="Reminder Title (e.g., Take Medicine)">
+                                <input type="datetime-local" id="reminderDateTime" class="input-field">
+                                <input type="text" id="reminderDescription" class="input-field" placeholder="Description (e.g., Take 2 tablets after breakfast)">
+                            </div>
+                            <button id="addReminder" class="btn-success w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Add Reminder
+                            </button>
+                            <div id="reminderError" class="error-message"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Virtual Caretaker Widget -->
+    <div class="caretaker-widget">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-sky-700">Virtual Caretaker</h3>
+                <p class="text-sm text-gray-600">Your AI health assistant</p>
+            </div>
+        </div>
+        <div class="mb-4">
+            <lottie-player src="https://assets4.lottiefiles.com/packages/lf20_5tkzkblw.json" background="transparent" speed="1" style="height: 100px;" loop autoplay></lottie-player>
+        </div>
+        <div class="space-y-3">
+            <input type="text" id="caretakerInput" class="input-field" placeholder="Ask me anything... (e.g., 'What should I do for a headache?' or 'मुझे क्या करना चाहिए?')">
+            <button id="caretakerSubmit" class="btn-primary w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Ask Caretaker
+            </button>
+            <div id="caretakerResponse" class="result-box hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize FullCalendar
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    $.ajax({
+                        url: '/get_calendar_data',
+                        data: {
+                            month: fetchInfo.start.getMonth() + 1,
+                            year: fetchInfo.start.getFullYear()
+                        },
+                        success: function(data) {
+                            if (data.error) {
+                                alert('Error: ' + data.error);
+                                successCallback([]);
+                                return;
+                            }
+                            var events = data.events.map(event => ({
+                                title: event.type.charAt(0).toUpperCase() + event.type.slice(1),
+                                start: event.date,
+                                extendedProps: { details: event.details },
+                                backgroundColor: '#38bdf8',
+                                borderColor: '#0284c7'
+                            }));
+                            successCallback(events);
+                        },
+                        error: function() {
+                            alert('Failed to load calendar data.');
+                            successCallback([]);
+                        }
+                    });
+                },
+                eventClick: function(info) {
+                    alert(info.event.extendedProps.details);
+                }
+            });
+            calendar.render();
+        });
+
+        // Show selected file name
+        document.getElementById('reportFile').addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : '';
+            document.getElementById('selectedFileName').textContent = fileName ? `Selected: ${fileName}` : '';
+        });
+
+        // Show/hide result boxes when they have content
+        function showResultBox(id) {
+            const box = document.getElementById(id);
+            if (box) {
+                box.classList.remove('hidden');
+            }
+        }
+
+        // High Contrast Toggle
+        $('#toggleContrast').click(function() {
+            $('body').toggleClass('normal-contrast high-contrast');
+            speak('High contrast mode toggled.');
+        });
+
+        // Voice Navigation
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                var utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        $('button, a').click(function() {
+            speak($(this).text());
+        });
+
+        // Clear error messages
+        function clearErrors() {
+            $('.error-message').text('');
+        }
+
+        // Format date for recent records
+        function formatDate() {
+            const now = new Date();
+            return now.toISOString().replace('T', ' ').slice(0, 19);
+        }
+
+        // Virtual Caretaker
+        $('#caretakerSubmit').click(function() {
+            clearErrors();
+            var message = $('#caretakerInput').val().trim();
+            if (!message) {
+                $('#caretakerResponse').html('<p class="error-message">Please enter a message.</p>');
+                showResultBox('caretakerResponse');
+                speak('Please enter a message.');
+                return;
+            }
+            $('#caretakerResponse').html('<p class="text-sky-600">🤖 Thinking...</p>');
+            showResultBox('caretakerResponse');
+            $.ajax({
+                url: '/virtual_caretaker',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ message: message }),
+                success: function(data) {
+                    if (data.response) {
+                        $('#caretakerResponse').html('<p><strong class="text-sky-700">🩺 Caretaker:</strong><br>' + data.response + '</p>');
+                        speak(data.response);
+                    } else {
+                        $('#caretakerResponse').html('<p class="error-message">No response received.</p>');
+                        speak('No response received.');
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = xhr.responseJSON && xhr.responseJSON.response 
+                        ? xhr.responseJSON.response 
+                        : 'Error contacting Virtual Caretaker. Please try again.';
+                    $('#caretakerResponse').html('<p class="error-message">' + errorMsg + '</p>');
+                    speak(errorMsg);
+                }
+            });
+        });
+
+        // Medicine Recommender
+        $('#recommendMedicine').click(function() {
+            clearErrors();
+            var problem = $('#healthProblem').val();
+            if (!problem) {
+                $('#medicineError').text('Please describe the health problem.');
+                return;
+            }
+            $('#medicineResponse').html('<p class="text-sky-600">💊 Analyzing your condition and finding recommendations...</p>');
+            showResultBox('medicineResponse');
+            $.ajax({
+                url: '/medicine_recommender',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ problem: problem }),
+                success: function(data) {
+                    $('#medicineResponse').html('<p><strong class="text-sky-700">💊 Recommendations:</strong><br>' + data.response + '</p>');
+                    speak('Recommendations provided.');
+                },
+                error: function(xhr) {
+                    var errorMsg = xhr.responseJSON ? xhr.responseJSON.response || 'Error getting recommendations.' : 'Error getting recommendations.';
+                    $('#medicineError').text(errorMsg);
+                }
+            });
+        });
+
+        // Symptom Checker
+        $('#checkSymptoms').click(function() {
+            clearErrors();
+            var symptoms = $('#symptoms').val();
+            if (!symptoms) {
+                $('#symptomError').text('Please enter symptoms.');
+                return;
+            }
+            $('#symptomResponse').html('<p class="text-sky-600">🔍 Analyzing your symptoms...</p>');
+            showResultBox('symptomResponse');
+            $.ajax({
+                url: '/symptom_checker',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ symptoms: symptoms }),
+                success: function(data) {
+                    $('#symptomResponse').html('<p><strong class="text-sky-700">🔍 Analysis Results:</strong><br>' + data.response + '</p>');
+                    speak('Symptom check results provided.');
+                    // Add to recent checks
+                    $('#symptomChecks').prepend(`<li class="p-3 bg-sky-50 rounded-lg border border-sky-100">${symptoms} <span class="text-sm text-gray-500">(${formatDate()})</span></li>`);
+                    if ($('#symptomChecks li').length > 3) {
+                        $('#symptomChecks li').slice(3).remove();
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = xhr.responseJSON ? xhr.responseJSON.response || 'Error checking symptoms.' : 'Error checking symptoms.';
+                    $('#symptomError').text(errorMsg);
+                }
+            });
+        });
+
+        // Prescription & Reports Upload
+        $('#uploadReport').click(function() {
+            clearErrors();
+            var file = $('#reportFile')[0].files[0];
+            if (!file) {
+                $('#uploadError').text('Please select a file.');
+                return;
+            }
+            $('#uploadResponse').html('<p class="text-sky-600">📄 Uploading and analyzing document...</p>');
+            showResultBox('uploadResponse');
+            var formData = new FormData();
+            formData.append('file', file);
+            $.ajax({
+                url: '/upload_report',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    $('#uploadResponse').html('<p><strong class="text-sky-700">📄 Document Summary:</strong><br>' + data.summary + '</p>');
+                    speak('File uploaded and summarized.');
+                    // Add to recent uploads
+                    $('#recentUploads').prepend(`<li class="p-3 bg-sky-50 rounded-lg border border-sky-100"><a href="/Uploads/${file.name}" class="text-sky-600 hover:text-sky-800 font-medium" target="_blank">${file.name}</a> <span class="text-sm text-gray-500">(${formatDate()})</span></li>`);
+                    if ($('#recentUploads li').length > 3) {
+                        $('#recentUploads li').slice(3).remove();
+                    }
+                    // Clear file input
+                    $('#reportFile').val('');
+                    $('#selectedFileName').text('');
+                },
+                error: function(xhr) {
+                    var errorMsg = xhr.responseJSON ? xhr.responseJSON.message || 'Error uploading file.' : 'Error uploading file.';
+                    $('#uploadError').text(errorMsg);
+                }
+            });
+        });
+
+        // Add Reminder
+        $('#addReminder').click(function() {
+            clearErrors();
+            var title = $('#reminderTitle').val();
+            var dateTime = $('#reminderDateTime').val();
+            var description = $('#reminderDescription').val();
+            if (!title || !dateTime || !description) {
+                $('#reminderError').text('All fields are required.');
+                return;
+            }
+            $.ajax({
+                url: '/add_reminder',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    title: title,
+                    date_time: dateTime,
+                    description: description
+                }),
+                success: function(data) {
+                    alert('✅ ' + data.message);
+                    // Refresh calendar
+                    var calendarEl = document.getElementById('calendar');
+                    var calendar = FullCalendar.getCalendar(calendarEl);
+                    calendar.refetchEvents();
+                    // Clear inputs
+                    $('#reminderTitle').val('');
+                    $('#reminderDateTime').val('');
+                    $('#reminderDescription').val('');
+                },
+                error: function(xhr) {
+                    var errorMsg = xhr.responseJSON ? xhr.responseJSON.message || 'Error adding reminder.' : 'Error adding reminder.';
+                    $('#reminderError').text(errorMsg);
+                }
+            });
+        });
+
+        // Enter key support for inputs
+        $('#caretakerInput').keypress(function(e) {
+            if (e.which == 13) {
+                $('#caretakerSubmit').click();
+            }
+        });
+    </script>
+</body>
+</html>
