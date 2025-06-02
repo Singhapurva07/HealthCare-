@@ -18,7 +18,7 @@ Technologies
 
 Backend: Flask, MySQL, Python
 Frontend: HTML, Tailwind CSS, JavaScript, jQuery, FullCalendar
-AI: Google Gemini API (gemini-1.5-flash)
+AI: Google Gemini API (gemini-2.0-flash)
 Libraries: mysql-connector-python, werkzeug, python-dotenv, google-generativeai, pdfplumber, Pillow
 Prerequisites
 
@@ -63,7 +63,7 @@ License
 MIT License
 
 Contact
-Email: apurva.singh@example.com
+Email: singhapurva297@gmail.com
 Report issues with logs and steps.
 
 Built for Indian patients, June 2, 2025.
